@@ -12,4 +12,6 @@ type CoinPrice interface {
 	Pair() string
 	//币种名称
 	CoinName() string
+	//时间戳
+	TimeStamp() int64
 }

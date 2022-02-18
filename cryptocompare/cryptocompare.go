@@ -18,18 +18,14 @@ const (
 )
 
 type CryptoCompare struct {
-	coinName string
+	coinName  string
+	timestamp int64
 }
 
 type cryptoCompareInfo struct {
 	Raw     map[string]interface{} `json:"RAW"`
 	DISPLAY interface{}            `json:"DISPLAY"`
 }
-
-//
-// type usdInfo struct {
-// 	USD usd `json:"USD"`
-// }
 
 type usd struct {
 	TYPE       string  `json:"TYPE"`
@@ -44,7 +40,8 @@ type usd struct {
 //
 func NewCryptoCompare(coinName string) *CryptoCompare {
 	return &CryptoCompare{
-		coinName: strings.ToUpper(coinName),
+		coinName:  strings.ToUpper(coinName),
+		timestamp: xtime.Second(),
 	}
 }
 
@@ -63,6 +60,11 @@ func (e *CryptoCompare) Pair() string {
 	return e.coinName + "/" + common.UpperUSD
 }
 
+//时间戳
+func (e *CryptoCompare) TimeStamp() int64 {
+	return e.timestamp
+}
+
 //获取指定币种美元价格
 func (e *CryptoCompare) GetPrice() decimal.Decimal {
 	var info *cryptoCompareInfo
@@ -70,9 +72,10 @@ func (e *CryptoCompare) GetPrice() decimal.Decimal {
 		return decimal.NewFromInt(0)
 	}
 
-	usdInfo := info.Raw[e.coinName].(map[string]interface{})[upperUsd]
+	usdInfo := info.Raw[e.coinName].(map[string]interface{})[common.UpperUSD]
 	var result usd
 	if err := mapstructure.Decode(usdInfo, &result); err == nil {
+		e.timestamp = result.LASTUPDATE
 		if result.FROMSYMBOL == e.coinName && xtime.CheckTimeValid(result.LASTUPDATE, 2) {
 			return decimal.NewFromFloat(result.PRICE).Truncate(2)
 		}

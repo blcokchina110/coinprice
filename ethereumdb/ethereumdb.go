@@ -6,6 +6,7 @@ import (
 
 	"github.com/blcokchina110/coinprice/common"
 	"github.com/blcokchina110/coinprice/xhttp"
+	"github.com/blcokchina110/coinprice/xtime"
 
 	"github.com/shopspring/decimal"
 )
@@ -15,7 +16,8 @@ const (
 )
 
 type EthereumDB struct {
-	coinName string
+	coinName  string
+	timestamp int64
 }
 
 //
@@ -28,7 +30,8 @@ type ethereumDBInfo struct {
 //
 func NewEthereumDB(coinName string) *EthereumDB {
 	return &EthereumDB{
-		coinName: strings.ToUpper(coinName),
+		coinName:  strings.ToUpper(coinName),
+		timestamp: xtime.Second(),
 	}
 }
 
@@ -47,6 +50,11 @@ func (e *EthereumDB) Pair() string {
 	return e.coinName + "/" + common.UpperUSD
 }
 
+//时间戳
+func (e *EthereumDB) TimeStamp() int64 {
+	return e.timestamp
+}
+
 //获取指定币种美元价格
 func (e *EthereumDB) GetPrice() decimal.Decimal {
 	var infos []ethereumDBInfo
@@ -55,6 +63,7 @@ func (e *EthereumDB) GetPrice() decimal.Decimal {
 	}
 
 	if len(infos) > 0 {
+		e.timestamp = infos[0].Timestamp
 		return infos[0].Price.Truncate(2)
 	}
 
