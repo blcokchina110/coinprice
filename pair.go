@@ -1,9 +1,7 @@
-package currencypair
+package coinprice
 
 import (
 	"strings"
-
-	"github.com/blcokchina110/coinprice/common"
 )
 
 //
@@ -51,6 +49,6 @@ func (c *CurrencyPair) Currency2() string {
 
 //检查交易对是否包含USD开头
 func (c *CurrencyPair) check() bool {
-	return strings.Contains(c.currency1, common.UpperUSD) &&
-		!strings.Contains(c.currency2, common.UpperUSD)
+	return strings.Contains(c.currency1, upperUSD) &&
+		!strings.Contains(c.currency2, upperUSD)
 }

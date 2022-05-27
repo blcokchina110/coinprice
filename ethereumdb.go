@@ -1,21 +1,18 @@
-package ethereumdb
+package coinprice
 
 import (
 	"fmt"
 
-	"github.com/blcokchina110/coinprice/currencypair"
-	"github.com/blcokchina110/coinprice/xhttp"
 	"github.com/blcokchina110/coinprice/xtime"
+	"github.com/blcokchina110/xhttp"
 
 	"github.com/shopspring/decimal"
 )
 
-const (
-	apiurl = "https://api.ethereumdb.com/v1/timeseries?pair=%v-%v&range=1m&type=line"
-)
+const ()
 
 type EthereumDB struct {
-	currencypair *currencypair.CurrencyPair
+	currencypair *CurrencyPair
 	timestamp    int64
 }
 
@@ -27,7 +24,7 @@ type ethereumDBInfo struct {
 }
 
 //
-func NewEthereumDB(currencypair *currencypair.CurrencyPair) *EthereumDB {
+func NewEthereumDB(currencypair *CurrencyPair) *EthereumDB {
 	return &EthereumDB{
 		currencypair: currencypair,
 		timestamp:    xtime.Second(),
@@ -48,17 +45,15 @@ func (e *EthereumDB) TimeStamp() int64 {
 func (e *EthereumDB) GetPrice() decimal.Decimal {
 	var infos []ethereumDBInfo
 
-	url := fmt.Sprintf(apiurl, e.currencypair.Currency1(), e.currencypair.Currency2())
-	if err := xhttp.GetDataUnmarshal(url, nil, &infos); err != nil {
-		return decimal.NewFromInt(0)
-	}
-
-	if len(infos) > 0 {
-		e.timestamp = infos[0].Timestamp
-		if !e.currencypair.Reverse() {
-			return infos[0].Price.Truncate(2)
+	url := fmt.Sprintf(ethereumdbApiUrl, e.currencypair.Currency1(), e.currencypair.Currency2())
+	if err := xhttp.GetParseData(url, nil, &infos); err == nil {
+		if len(infos) > 0 {
+			e.timestamp = infos[0].Timestamp
+			if !e.currencypair.Reverse() {
+				return infos[0].Price.Truncate(2)
+			}
+			return decimal.NewFromInt(1).Div(infos[0].Price).Truncate(8)
 		}
-		return decimal.NewFromInt(1).Div(infos[0].Price).Truncate(8)
 	}
 
 	return decimal.NewFromInt(0)
