@@ -2,62 +2,50 @@ package cryptocompare
 
 import (
 	"fmt"
-	"strings"
 
+	"github.com/blcokchina110/coinprice/currencypair"
 	"github.com/blcokchina110/coinprice/xhttp"
 	"github.com/blcokchina110/coinprice/xtime"
-
-	"github.com/blcokchina110/coinprice/common"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/shopspring/decimal"
 )
 
 const (
-	apiurl = "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=%v&tsyms=USD"
+	apiurl = "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=%v&tsyms=%v"
 )
 
 type CryptoCompare struct {
-	coinName  string
-	timestamp int64
+	currencypair *currencypair.CurrencyPair
+	timestamp    int64
 }
 
 type cryptoCompareInfo struct {
 	Raw     map[string]interface{} `json:"RAW"`
-	DISPLAY interface{}            `json:"DISPLAY"`
+	Display interface{}            `json:"DISPLAY"`
 }
 
-type usd struct {
-	TYPE       string  `json:"TYPE"`
-	MARKET     string  `json:"MARKET"`
-	FROMSYMBOL string  `json:"FROMSYMBOL"`
-	TOSYMBOL   string  `json:"TOSYMBOL"`
-	FLAGS      string  `json:"FLAGS"`
-	PRICE      float64 `json:"PRICE"`
-	LASTUPDATE int64   `json:"LASTUPDATE"`
+type coinPriceInfo struct {
+	Type       string  `json:"TYPE"`
+	Market     string  `json:"MARKET"`
+	FromSymbol string  `json:"FROMSYMBOL"`
+	ToSymbol   string  `json:"TOSYMBOL"`
+	Flags      string  `json:"FLAGS"`
+	Price      float64 `json:"PRICE"`
+	LastUpdate int64   `json:"LASTUPDATE"`
 }
 
 //
-func NewCryptoCompare(coinName string) *CryptoCompare {
+func NewCryptoCompare(currencypair *currencypair.CurrencyPair) *CryptoCompare {
 	return &CryptoCompare{
-		coinName:  strings.ToUpper(coinName),
-		timestamp: xtime.Second(),
+		currencypair: currencypair,
+		timestamp:    xtime.Second(),
 	}
 }
 
 //接口渠道
 func (e *CryptoCompare) Name() string {
 	return "cryptocompare"
-}
-
-//币种名称
-func (e *CryptoCompare) CoinName() string {
-	return e.coinName
-}
-
-//交易对
-func (e *CryptoCompare) Pair() string {
-	return e.coinName + "/" + common.UpperUSD
 }
 
 //时间戳
@@ -68,16 +56,20 @@ func (e *CryptoCompare) TimeStamp() int64 {
 //获取指定币种美元价格
 func (e *CryptoCompare) GetPrice() decimal.Decimal {
 	var info *cryptoCompareInfo
-	if err := xhttp.GetDataUnmarshal(fmt.Sprintf(apiurl, e.coinName), nil, &info); err != nil {
+	if err := xhttp.GetDataUnmarshal(fmt.Sprintf(apiurl, e.currencypair.Currency1(), e.currencypair.Currency2()), nil, &info); err != nil {
 		return decimal.NewFromInt(0)
 	}
 
-	usdInfo := info.Raw[e.coinName].(map[string]interface{})[common.UpperUSD]
-	var result usd
-	if err := mapstructure.Decode(usdInfo, &result); err == nil {
-		e.timestamp = result.LASTUPDATE
-		if result.FROMSYMBOL == e.coinName && xtime.CheckTimeValid(result.LASTUPDATE, 2) {
-			return decimal.NewFromFloat(result.PRICE).Truncate(2)
+	priceInfo := info.Raw[e.currencypair.Currency1()].(map[string]interface{})[e.currencypair.Currency2()]
+	var result coinPriceInfo
+	if err := mapstructure.Decode(priceInfo, &result); err == nil {
+		e.timestamp = result.LastUpdate
+		if result.FromSymbol == e.currencypair.Currency1() && xtime.CheckTimeValid(result.LastUpdate, 2) {
+			df := decimal.NewFromFloat(result.Price)
+			if !e.currencypair.Reverse() {
+				return df.Truncate(2)
+			}
+			return decimal.NewFromInt(1).Div(df).Truncate(8)
 		}
 	}
 

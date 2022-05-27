@@ -1,13 +1,15 @@
 package coinprice
 
 import (
-	"github.com/blcokchina110/coinprice/cryptocompare"
 	"fmt"
 	"testing"
+
+	"github.com/blcokchina110/coinprice/currencypair"
+	"github.com/blcokchina110/coinprice/ethereumdb"
 )
 
 func TestCoinPrice(t *testing.T) {
-
-	coinPriceEvent := NewCoinPriceEvent(cryptocompare.NewCryptoCompare("ltc"))
+	c := currencypair.NewCurrencyPair("ETH", "USD")
+	coinPriceEvent := NewCoinPriceEvent(ethereumdb.NewEthereumDB(c))
 	fmt.Println(coinPriceEvent.CoinPrice.GetPrice())
 }

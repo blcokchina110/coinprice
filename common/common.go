@@ -1,5 +1,6 @@
 package common
 
 const (
-	UpperUSD = "USD"
+	UpperUSD  = "USD"
+	UpperUSDT = "USDT"
 )

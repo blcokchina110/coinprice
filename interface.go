@@ -1,6 +1,8 @@
 package coinprice
 
-import "github.com/shopspring/decimal"
+import (
+	"github.com/shopspring/decimal"
+)
 
 //
 type CoinPrice interface {
@@ -8,10 +10,6 @@ type CoinPrice interface {
 	GetPrice() decimal.Decimal
 	//接口渠道
 	Name() string
-	//交易对
-	Pair() string
-	//币种名称
-	CoinName() string
 	//时间戳
 	TimeStamp() int64
 }
