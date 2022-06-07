@@ -53,8 +53,15 @@ func (e *CryptoCompare) GetPrice() decimal.Decimal {
 	var info *cryptoCompareInfo
 
 	url := fmt.Sprintf(cryptocompareApiUrl, e.currencypair.Currency1(), e.currencypair.Currency2())
-	if err := xhttp.GetParseData(url, nil, &info); err == nil {
-		priceInfo := info.Raw[e.currencypair.Currency1()].(map[string]interface{})[e.currencypair.Currency2()]
+	if err := xhttp.GetParseData(url, nil, &info); err == nil &&
+		info != nil &&
+		info.Raw[e.currencypair.Currency1()] != nil {
+
+		var priceInfo interface{}
+		if priceInfo = info.Raw[e.currencypair.Currency1()].(map[string]interface{})[e.currencypair.Currency2()]; priceInfo == nil {
+			return decimal.NewFromInt(0)
+		}
+
 		var result coinPriceInfo
 		if err := mapstructure.Decode(priceInfo, &result); err == nil {
 			e.timestamp = result.LastUpdate

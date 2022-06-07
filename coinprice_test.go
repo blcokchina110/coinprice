@@ -7,6 +7,6 @@ import (
 
 func TestCoinPrice(t *testing.T) {
 	c := NewCurrencyPair("ETH", "USD")
-	coinPriceEvent := NewCoinPriceEvent(NewEthereumDB(c))
+	coinPriceEvent := NewCoinPriceEvent(NewCryptoCompare(c))
 	fmt.Println(coinPriceEvent.CoinPrice.GetPrice())
 }
